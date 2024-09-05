@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <OutputPath>..\..\bin\</OutputPath>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SceneEffectsPresets</RootNamespace>
+    <AssemblyName>KK_SceneEffectsPresets</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <DefineConstants>TRACE;KK</DefineConstants>
+    <Optimize>false</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PostBuildEvent>copy /Y "..\bin\KK_SceneEffectsPresets.dll" "C:\Koikatsu\BepInEx\plugins\ShalltyPlugins\KK_SceneEffectsPresets.dll"</PostBuildEvent>
+    <ProjectGuid>{78758E70-37E7-404A-955F-9B93D4EE2239}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>TRACE;KK, KOIKATSU, BEPINEX</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Reference Include="DefaultParamEditor.Koikatu">
+      <HintPath>..\..\packages\KeelPlugins.DefaultParamEditor\DefaultParamEditor.Koikatu.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.XML" />
+    <PackageReference Include="BepInEx.Core" Version="5.4.4" />
+    <PackageReference Include="BepInEx.Analyzers" Version="1.0.4" />
+    <PackageReference Include="ExtensibleSaveFormat.Koikatu" Version="19.3.3" />
+    <PackageReference Include="IllusionLibs.Koikatu.Assembly-CSharp" Version="2019.4.27.4" />
+    <PackageReference Include="IllusionLibs.Koikatu.Assembly-CSharp-firstpass" Version="2019.4.27.4" />
+    <PackageReference Include="IllusionLibs.Koikatu.UnityEngine" Version="5.6.2.4" />
+    <PackageReference Include="IllusionLibs.Koikatu.UnityEngine.UI" Version="5.6.2.4" />
+    <PackageReference Include="IllusionModdingAPI.KKAPI" Version="1.36.0" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\..\Shared\Shared.projitems" Label="Shared" />
+  <Import Project="..\SceneEffectsPresets.Core\SceneEffectsPresets.Core.projitems" Label="Shared" />
+  <Import Project="..\..\ToolBox\ToolBox.projitems" Label="Shared" />
+</Project>
