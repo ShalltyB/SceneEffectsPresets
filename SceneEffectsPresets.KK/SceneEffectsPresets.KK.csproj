@@ -21,7 +21,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Reference Include="DefaultParamEditor.Koikatu">
+    <Reference Include="DefaultParamEditor.Koikatu, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\KeelPlugins.DefaultParamEditor\DefaultParamEditor.Koikatu.dll</HintPath>
     </Reference>
     <Reference Include="System" />

@@ -12,8 +12,6 @@ using System.Linq;
 using System.Reflection;
 using ToolBox.Extensions;
 using UnityEngine;
-using static DefaultParamEditor.Koikatu.DefaultParamEditor;
-using static DefaultParamEditor.Koikatu.ParamData;
 
 namespace SceneEffectsPresets
 {
@@ -32,7 +30,7 @@ namespace SceneEffectsPresets
 #elif KKS
         public const string PluginNameInternal = "KKS_SceneEffectsPresets";
 #endif
-        public const string Version = "2.0";
+        public const string Version = "2.1";
         private const int _uniqueId = ('S' << 24) | ('E' << 16) | ('P' << 8) | 'R';
         internal static new ManualLogSource Logger;
 
@@ -60,7 +58,7 @@ namespace SceneEffectsPresets
         private static bool isSelecting = false;
         private static string presetsSearch = "";
 
-        private static SceneData currentSceneData;
+        private static ParamData.SceneData currentSceneData;
 
         private static float currentSceneData_mixStrength = 100f;
         private static float currentSceneData_allSliders = 50f;
@@ -93,8 +91,8 @@ namespace SceneEffectsPresets
         private static float currentSceneData_rampG = 100f;
         private static float currentSceneData_ambientShadowG = 100f;
 
-        private static KeyValuePair<string, SceneData> presetA;
-        private static KeyValuePair<string, SceneData> presetB;
+        private static KeyValuePair<string, ParamData.SceneData> presetA;
+        private static KeyValuePair<string, ParamData.SceneData> presetB;
 
         private static bool autoUpdate = true;
 
@@ -362,7 +360,7 @@ namespace SceneEffectsPresets
                         {
                             if (File.Exists(file))
                             {
-                                presetA = new KeyValuePair<string, SceneData>(_fileName, LoadSceneData(file));
+                                presetA = new KeyValuePair<string, ParamData.SceneData>(_fileName, LoadSceneData(file));
                                 if (autoUpdate && presetA.Value != null && presetB.Value != null)
                                     UpdateCurrentPreset();
                             }
@@ -374,7 +372,7 @@ namespace SceneEffectsPresets
                         {
                             if (File.Exists(file))
                             {
-                                presetB = new KeyValuePair<string, SceneData>(_fileName, LoadSceneData(file));
+                                presetB = new KeyValuePair<string, ParamData.SceneData>(_fileName, LoadSceneData(file));
                                 if (autoUpdate && presetA.Value != null && presetB.Value != null)
                                     UpdateCurrentPreset();
                             }
@@ -471,16 +469,8 @@ namespace SceneEffectsPresets
                 {
                     if (presetA.Value != null)
                     {
-                        SceneParam._sceneData = presetA.Value;
-                        SceneParam._sceneData.saved = true;
-
+                        LoadSceneData(presetA.Value, true);
                         saveName = presetA.Key;
-
-                        if (Studio.Studio.Instance)
-                        {
-                            SceneParam.SetSceneInfoValues(Studio.Studio.Instance.sceneInfo);
-                            Studio.Studio.Instance.systemButtonCtrl.UpdateInfo();
-                        }
                     }
                 }
                 GUI.color = defColor;
@@ -494,14 +484,8 @@ namespace SceneEffectsPresets
                 {
                     if (presetB.Value != null)
                     {
-                        SceneParam._sceneData = presetB.Value;
-                        SceneParam._sceneData.saved = true;
+                        LoadSceneData(presetB.Value, true);
                         saveName = presetB.Key;
-                        if (Studio.Studio.Instance)
-                        {
-                            SceneParam.SetSceneInfoValues(Studio.Studio.Instance.sceneInfo);
-                            Studio.Studio.Instance.systemButtonCtrl.UpdateInfo();
-                        }
                     }
                 }
                 GUI.color = defColor;
@@ -775,9 +759,9 @@ namespace SceneEffectsPresets
         {
             float mixStrength = currentSceneData_mixStrength / 100;
 
-            SceneData presetAData = presetA.Value;
-            SceneData presetBData = presetB.Value;
-            currentSceneData = new SceneData
+            ParamData.SceneData presetAData = presetA.Value;
+            ParamData.SceneData presetBData = presetB.Value;
+            currentSceneData = new ParamData.SceneData
             {
                 // Int properties are determined by the lerp factor (under 50 use presetAData, otherwise presetBData)
                 aceNo = currentSceneData_aceNo * mixStrength > 50f ? presetBData.aceNo : presetAData.aceNo,
@@ -820,14 +804,7 @@ namespace SceneEffectsPresets
                 ambientShadow = Color.Lerp(presetAData.ambientShadow, presetBData.ambientShadow, currentSceneData_ambientShadow / 100) * mixStrength
             };
 
-            SceneParam._sceneData = currentSceneData;
-            SceneParam._sceneData.saved = true;
-
-            if (Studio.Studio.Instance)
-            {
-                SceneParam.SetSceneInfoValues(Studio.Studio.Instance.sceneInfo);
-                Studio.Studio.Instance.systemButtonCtrl.UpdateInfo();
-            }
+            LoadSceneData(currentSceneData, true);
         }
 
         public static void ReloadFilesList()
@@ -866,17 +843,8 @@ namespace SceneEffectsPresets
         {
             try
             {
-                data = JSONSerializer.Deserialize<ParamData>(File.ReadAllText(filePath));
-
-                SceneParam._sceneData = data.sceneParamData;
-                SceneParam._sceneData.saved = true;
-
-                if (Studio.Studio.Instance)
-                {
-                    Logger.LogInfo("Loading scene effects preset.");
-                    SceneParam.SetSceneInfoValues(Studio.Studio.Instance.sceneInfo);
-                    Studio.Studio.Instance.systemButtonCtrl.UpdateInfo();
-                }
+                ParamData paramData = JSONSerializer.Deserialize<ParamData>(File.ReadAllText(filePath));
+                LoadSceneData(paramData.sceneParamData, true);
             }
             catch (Exception ex)
             {
@@ -884,8 +852,16 @@ namespace SceneEffectsPresets
             }
         }
 
-        public static SceneData LoadSceneData(string filePath)
+        public static void LoadSceneData(ParamData.SceneData sceneData, bool saved = false)
         {
+            if (sceneData == null) return;
+            CopySceneParam(sceneData, ParamData.Instance.sceneParamData, saved);
+            SceneParam.Load();
+        }
+
+        public static ParamData.SceneData LoadSceneData(string filePath)
+        {
+            if (File.Exists(filePath) == false) return null;
             return JSONSerializer.Deserialize<ParamData>(File.ReadAllText(filePath)).sceneParamData;
         }
 
@@ -895,7 +871,7 @@ namespace SceneEffectsPresets
                 Directory.CreateDirectory(folder_path);
 
             SceneParam.Save();
-            var json = JSONSerializer.Serialize(data.GetType(), data, true);
+            var json = JSONSerializer.Serialize(ParamData.Instance.GetType(), ParamData.Instance, true);
             File.WriteAllText(filePath, json);
             ReloadFilesList();
         }
@@ -906,6 +882,45 @@ namespace SceneEffectsPresets
 
             saveName = "LastestScene";
             SaveSceneParam(Path.Combine(folder_path, saveName + ".json"));
+        }
+
+        public static void CopySceneParam(ParamData.SceneData source, ParamData.SceneData destination, bool saved = false)
+        {
+            if (source == null || destination == null) return;
+
+            destination.saved = saved;
+            destination.aceNo = source.aceNo;
+            destination.aceNo_GUID = source.aceNo_GUID;
+            destination.ace2No = source.ace2No;
+            destination.ace2No_GUID = source.ace2No_GUID;
+            destination.aceBlend = source.aceBlend;
+            destination.enableAOE = source.enableAOE;
+            destination.aoeColor = source.aoeColor;
+            destination.aoeRadius = source.aoeRadius;
+            destination.enableBloom = source.enableBloom;
+            destination.bloomIntensity = source.bloomIntensity;
+            destination.bloomThreshold = source.bloomThreshold;
+            destination.bloomBlur = source.bloomBlur;
+            destination.enableDepth = source.enableDepth;
+            destination.depthFocalSize = source.depthFocalSize;
+            destination.depthAperture = source.depthAperture;
+            destination.enableVignette = source.enableVignette;
+            destination.enableFog = source.enableFog;
+            destination.fogColor = source.fogColor;
+            destination.fogHeight = source.fogHeight;
+            destination.fogStartDistance = source.fogStartDistance;
+            destination.enableSunShafts = source.enableSunShafts;
+            destination.sunThresholdColor = source.sunThresholdColor;
+            destination.sunColor = source.sunColor;
+            destination.enableShadow = source.enableShadow;
+            destination.lineColorG = source.lineColorG;
+            destination.ambientShadow = source.ambientShadow;
+            destination.lineWidthG = source.lineWidthG;
+            destination.rampG = source.rampG;
+            destination.rampG_GUID = source.rampG_GUID;
+            destination.ambientShadowG = source.ambientShadowG;
+            destination.cameraNearClip = source.cameraNearClip;
+            destination.fov = source.fov;
         }
     }
 }
